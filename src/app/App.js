@@ -1,52 +1,47 @@
 import React, { Component } from 'react';
-import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
-import ReactFileReader from 'react-file-reader';
 
-import RaisedButton from 'material-ui/RaisedButton';
-import Drawer from 'material-ui/Drawer';
 import AppBar from 'material-ui/AppBar';
-import MenuItem from 'material-ui/MenuItem';
+import Toolbar from 'material-ui/Toolbar';
+import Typography from 'material-ui/Typography';
+import Tabs, { Tab } from 'material-ui/Tabs';
 
-import './App.css';
-class App extends Component {
+import Transformacao from './transformacao/Transformacao'
+
+export default class App extends Component {
 
   constructor(props) {
     super(props);
-    this.state = { drawerOpen: false };
+    this.state = {
+      selectedTab: 'transf'
+    };
   }
 
-  handleToggle = () => this.setState({ drawerOpen: !this.state.drawerOpen });
+  handleTabChange = (event, selectedTab) => {
+    this.setState({ selectedTab });
+  };
 
-  handleFiles = files => {
-    let splitted = files.base64.split(',');
-
-    if (splitted.length === 2) {
-      let config = JSON.parse(atob(splitted[1]));
-      console.log(config);
-    }
-  }
   render() {
+    const { selectedTab } = this.state;
+
     return (
-      <MuiThemeProvider>
-        <div>
-          <AppBar title="Menu"
-            onLeftIconButtonClick={this.handleToggle} />
-          <Drawer
-            onRequestChange={(drawerOpen) => this.setState({ drawerOpen })}
-            width={200} docked={false}
-            open={this.state.drawerOpen}>
-            <MenuItem>Menu Item</MenuItem>
-            <MenuItem>Menu Item 2</MenuItem>
-          </Drawer>
-          <div>
-            <ReactFileReader handleFiles={this.handleFiles} fileTypes={[".json"]} base64={true} multipleFiles={false}>
-              <RaisedButton label="UPLOAD" />
-            </ReactFileReader>
-          </div>
-        </div>
-      </MuiThemeProvider >
+      <div>
+        <AppBar position="static" color="default">
+          <Toolbar>
+            <Typography variant="title" color="inherit">
+              Processador de Planilhas
+          </Typography>
+          </Toolbar>
+        </AppBar>
+
+        <AppBar position="static">
+          <Tabs value={selectedTab} onChange={this.handleTabChange}>
+            <Tab value="transf" label="Transformação de planilha" />
+            <Tab value="dedupl" label="Remoção de duplicados" />
+          </Tabs>
+        </AppBar>
+        {selectedTab === 'transf' && <Transformacao />}
+        {selectedTab === 'dedupl' && <div>dedupl</div>}
+      </div>
     );
   }
 }
-
-export default App;
