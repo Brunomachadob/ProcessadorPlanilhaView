@@ -1,5 +1,16 @@
 import React, { Component } from 'react';
 
+import { withStyles } from 'material-ui/styles';
+import Switch from 'material-ui/Switch';
+import Paper from 'material-ui/Paper';
+import TextField from 'material-ui/TextField';
+import { FormControlLabel } from 'material-ui/Form';
+import Tooltip from 'material-ui/Tooltip';
+import List, { ListItem, ListItemSecondaryAction, ListItemText } from 'material-ui/List';
+import Divider from 'material-ui/Divider';
+import IconButton from 'material-ui/IconButton';
+import AddCircleIcon from '@material-ui/icons/AddCircle';
+import Grid from 'material-ui/Grid';
 import ExpansionPanel, {
     ExpansionPanelSummary,
     ExpansionPanelDetails,
@@ -16,6 +27,12 @@ import Dialog, {
 } from 'material-ui/Dialog';
 
 import SeletorArquivo from '../componentes/SeletorArquivo';
+
+const styles = theme => ({
+    colunas: {
+        flexGrow: 1
+    }
+});
 
 class ConfigModal extends Component {
     state = {
@@ -35,23 +52,72 @@ class ConfigModal extends Component {
     handleCriarConfig = () => {
         this.setState({
             expanded: 'changeConfig',
-            config: {}
+            config: {
+                nome: '',
+                colunas: []
+            }
         })
     }
 
     handleImportarConfig = (config) => {
-        console.log(config);
-        
+        config = Object.assign({
+            nome: '',
+            colunas: []
+        }, config);
+
         this.setState({
             expanded: 'changeConfig',
             config: config
         })
     }
 
+    updateConfig = (config) => {
+        this.setState({
+            config: {
+                ...this.state.config, ...config
+            }
+        })
+    }
+
+
+    handleInputChange = event => {
+        const target = event.target;
+        const value = target.type === 'checkbox' ? target.checked : target.value;
+        const name = target.name;
+
+        this.updateConfig({
+            [name]: value
+        });
+    };
+
+    onSelectColuna = coluna => {
+        this.setState({
+            colunaSelecionada: coluna
+        })
+    }
+
+    handleConfirm = event => {
+        this.props.handleConfirm(this.state.config);
+    }
+
     render() {
-        const { handleClose, children } = this.props;
-        const { handleCriarConfig, handleImportarConfig, isPanelExpanded, handleExpandedChange } = this;
-        const { config } = this.state;
+        const { config, colunaSelecionada } = this.state;
+
+        const {
+            classes,
+            handleCancel,
+            children,
+        } = this.props;
+
+        const {
+            handleConfirm,
+            handleInputChange,
+            handleCriarConfig,
+            handleImportarConfig,
+            isPanelExpanded,
+            handleExpandedChange,
+            onSelectColuna
+        } = this;
 
         return (
             <Dialog
@@ -69,10 +135,12 @@ class ConfigModal extends Component {
                             <Typography>Selecione uma configuração</Typography>
                         </ExpansionPanelSummary>
                         <ExpansionPanelDetails>
-                            <Button onClick={handleCriarConfig} color="primary" autoFocus>
-                                {'CRIAR'}
-                            </Button>
-                            <SeletorArquivo fileDesc={'CONFIGURAÇÃO'} fileTypes={['.json']} parseJson={true} onSelect={handleImportarConfig} />
+                            <Grid container spacing={16}>
+                                <Button onClick={handleCriarConfig} color="primary" autoFocus>
+                                    {'NOVA'}
+                                </Button>
+                                <SeletorArquivo fileDesc={'CONFIGURAÇÃO'} fileTypes={['.json']} parseJson={true} onSelect={handleImportarConfig} />
+                            </Grid>
                         </ExpansionPanelDetails>
                     </ExpansionPanel>
 
@@ -81,14 +149,48 @@ class ConfigModal extends Component {
                             <Typography>Configuração</Typography>
                         </ExpansionPanelSummary>
                         <ExpansionPanelDetails>
-                            {
-                                config ? children(config) : ''
-                            }
+                            <Grid container className={classes.root} spacing={16}>
+                                {config &&
+                                    <Grid
+                                        container
+                                        spacing={16}
+                                        alignItems="flex-start"
+                                        direction="column"
+                                        justify="flex-start">
+                                        <Grid item>
+                                            <TextField
+                                                name="nome"
+                                                label="Nome"
+                                                value={config.nome}
+                                                onChange={handleInputChange}
+                                            />
+                                            <FormControlLabel
+                                                control={
+                                                    <Switch name="temCabecalho"
+                                                        checked={config.temCabecalho}
+                                                        onChange={handleInputChange}
+                                                    />
+                                                } label="Tem cabeçalho" />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <ListaColunas classes={classes} config={config} onSelectColuna={onSelectColuna} />
+                                        </Grid>
+                                        {colunaSelecionada &&
+                                            <Grid item xs={12} sm={6}>
+                                                {children(colunaSelecionada)}
+                                            </Grid>
+                                        }
+                                    </Grid>
+                                }
+                            </Grid>
                         </ExpansionPanelDetails>
                     </ExpansionPanel>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleClose} color="primary" autoFocus>
+                    <Button onClick={handleCancel} color="secondary" autoFocus>
+                        {'CANCELAR'}
+                    </Button>
+                    <Button onClick={handleConfirm} color="primary" variant="raised" autoFocus>
                         {'OK'}
                     </Button>
                 </DialogActions>
@@ -97,4 +199,41 @@ class ConfigModal extends Component {
     }
 }
 
-export default ConfigModal;
+const ListaColunas = (props) => {
+    const { classes, config, onSelectColuna } = props;
+
+    const onSelectColunaBuilder = coluna => event => {
+        return onSelectColuna(coluna);
+    }
+
+    return (
+        <Grid className={classes.colunas} container>
+            <Paper elevation={4}>
+                <List>
+                    <ListItem>
+                        <ListItemText primary="Colunas" />
+                        <ListItemSecondaryAction>
+                            <IconButton aria-label="Comments">
+                                <Tooltip title="Nova coluna">
+                                    <AddCircleIcon />
+                                </Tooltip>
+                            </IconButton>
+                        </ListItemSecondaryAction>
+                    </ListItem>
+                    <Divider />
+                    {
+                        config.colunas.map(col => {
+                            return (
+                                <ListItem key={col.nome} button onClick={onSelectColunaBuilder(col)}>
+                                    <ListItemText primary={col.nome} />
+                                </ListItem>
+                            );
+                        })
+                    }
+                </List>
+            </Paper>
+        </Grid>
+    )
+}
+
+export default withStyles(styles)(ConfigModal);

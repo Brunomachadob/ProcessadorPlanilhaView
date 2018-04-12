@@ -44,14 +44,21 @@ class Transformacao extends Component {
         })
     }
 
+    handleConfigConfirm = (config) => {
+        console.log(config);
+        // this.setState({
+        //     showConfig: false
+        // })
+    }
+
     render() {
         const { classes } = this.props;
         const { errorText, showConfig } = this.state;
 
         return (
             <div>
-                { errorText && <ErrorDialog title="Campos obrigatórios" text={errorText} handleClose={this.handleAlertClose} /> }
-                { showConfig && <TransformacaoConfigModal handleClose={this.handleConfigClose}/> }
+                {errorText && <ErrorDialog title="Campos obrigatórios" text={errorText} handleClose={this.handleAlertClose} />}
+                {showConfig && <TransformacaoConfigModal handleCancel={this.handleConfigClose} handleConfirm={this.handleConfigConfirm} />}
                 <Grid
                     container
                     className={classes.container}
@@ -61,9 +68,7 @@ class Transformacao extends Component {
                 >
                     <Card>
                         <CardContent>
-                            <form noValidate autoComplete="off">
-                                <SeletorArquivo onSelect={this.onSelectPlanilha} />
-                            </form>
+                            <SeletorArquivo onSelect={this.onSelectPlanilha} />
                         </CardContent>
                         <CardActions>
                             <Button variant="raised" color="primary" onClick={this.processar}>PROCESSAR</Button>
