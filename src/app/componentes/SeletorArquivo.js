@@ -28,7 +28,14 @@ class SeletorArquivo extends Component {
         let selectedFile;
         let content;
 
-        if (this.props.parseJson) {
+        if (this.props.asString) {
+            selectedFile = files.fileList[0];
+            let splitted = files.base64.split(',');
+
+            if (splitted.length === 2) {
+                content = atob(splitted[1]);
+              }
+        } else if (this.props.parseJson) {
             selectedFile = files.fileList[0];
             let splitted = files.base64.split(',');
 
@@ -48,12 +55,12 @@ class SeletorArquivo extends Component {
     }
 
     render() {
-        const { classes, fileDesc, fileTypes, parseJson } = this.props;
+        const { classes, fileDesc, fileTypes, parseJson, asString } = this.props;
         const { selectedFileName } = this.state;
 
         return (
             <FormControl className={classes.formControl}>
-                <ReactFileReader handleFiles={this.onSelectPlanilha} base64={parseJson} fileTypes={fileTypes} multipleFiles={false}>
+                <ReactFileReader handleFiles={this.onSelectPlanilha} base64={parseJson || asString} fileTypes={fileTypes} multipleFiles={false}>
                     <div>
                         <InputLabel htmlFor="file">{fileDesc}</InputLabel>
                         <Input required className={classes.input} disabled id="file" value={selectedFileName} />

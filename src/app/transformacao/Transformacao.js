@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import axios from 'axios';
+
 import { withStyles } from 'material-ui/styles';
 import Button from 'material-ui/Button';
 import Grid from 'material-ui/Grid';
@@ -6,7 +8,7 @@ import Card, { CardActions, CardContent } from 'material-ui/Card';
 
 import ErrorDialog from '../componentes/ErrorDialog';
 import SeletorArquivo from '../componentes/SeletorArquivo';
-import TransformacaoConfigModal from './TransformacaoConfigModal'
+import ConfigModal from '../componentes/config/ConfigModal';
 
 const styles = theme => ({
     container: {
@@ -45,10 +47,19 @@ class Transformacao extends Component {
     }
 
     handleConfigConfirm = (config) => {
-        console.log(config);
-        // this.setState({
-        //     showConfig: false
-        // })
+        const data = new FormData();
+
+        data.set('file', this.planilha);
+        data.set('config', config);
+
+        axios.post('http://localhost:8080/processador', data)
+            .then(function (result) {
+                var blob = new Blob([result.data]);
+                var link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = "myFileName.xlsx";
+                link.click();
+            }).catch(console.error)
     }
 
     render() {
@@ -58,7 +69,7 @@ class Transformacao extends Component {
         return (
             <div>
                 {errorText && <ErrorDialog title="Campos obrigatórios" text={errorText} handleClose={this.handleAlertClose} />}
-                {showConfig && <TransformacaoConfigModal handleCancel={this.handleConfigClose} handleConfirm={this.handleConfigConfirm} />}
+                {showConfig && <ConfigModal handleCancel={this.handleConfigClose} handleConfirm={this.handleConfigConfirm} />}
                 <Grid
                     container
                     className={classes.container}

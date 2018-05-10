@@ -2,6 +2,11 @@ import React, { Component } from 'react';
 
 import { withStyles } from 'material-ui/styles';
 
+import CodeMirror from 'react-codemirror';
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/theme/oceanic-next.css'
+import 'codemirror/mode/yaml/yaml';
+
 import Grid from 'material-ui/Grid';
 
 import Stepper, { Step, StepLabel, StepContent } from 'material-ui/Stepper';
@@ -14,38 +19,42 @@ import Dialog, {
 } from 'material-ui/Dialog';
 
 import SeletorArquivo from '../../componentes/SeletorArquivo';
-import ResumoConfig from './ResumoConfig';
-import ConfigEditor from './ConfigEditor';
 
 
 const styles = theme => ({
+    codeMirror: {
+        flexGrow: 1,
+        margin: '10px'
+    },
+    stepLabel: {
+        cursor: 'pointer'
+    }
 });
 
 class ConfigModal extends Component {
     state = {
-        expanded: 'selectConfig',
         activeStep: 0
     };
+
+    handleSelectStep = (step) => {
+        this.setState({
+            activeStep: step
+        })
+    }
 
     handleCriarConfig = () => {
         this.setState({
             activeStep: 1,
-            expanded: 'changeConfig',
-            config: {
-                nome: '',
-                colunas: []
-            }
+            config: '',
+            configBkp: ''
         })
     }
 
     handleImportarConfig = (config) => {
         this.setState({
             activeStep: 1,
-            expanded: 'changeConfig',
-            config: Object.assign({
-                nome: '',
-                colunas: []
-            }, config)
+            configBkp: config,
+            config: config
         })
     }
 
@@ -53,35 +62,33 @@ class ConfigModal extends Component {
         this.props.handleConfirm(this.state.config);
     }
 
-    handleEditConfig = () => {
+    handleUpdateConfig = (config) => {
         this.setState({
-            editedConfig: {
-                ...this.state.config
-            }
-        })
-    }
-
-    handleCancelConfigEdition = () => {
-        this.setState({
-            editedConfig: null
-        });
-    }
-
-    handleConfirmConfigEdition = (config) => {
-        console.log('config', config);
-        this.setState({
-            editedConfig: null,
             config: config
         });
     }
 
+    handleResetConfigBkp = () => {
+        let bkp = this.state.configBkp;
+        
+        this.setState({
+            config: bkp
+        });
+    }
+
     render() {
-        const { editedConfig, config } = this.state;
+        const { config } = this.state;
 
         const {
             handleCancel,
-            children,
+            classes
         } = this.props;
+
+        const codeMirrorOpts = {
+            mode: 'yaml',
+            theme: 'oceanic-next',
+            lineNumbers: true
+        };
 
         return (
             <Dialog
@@ -97,19 +104,19 @@ class ConfigModal extends Component {
 
                     <Stepper activeStep={this.state.activeStep} orientation="vertical">
                         <Step key={0}>
-                            <StepLabel>{'Selecione uma configuração'}</StepLabel>
+                            <StepLabel onClick={() => this.handleSelectStep(0)} className={classes.stepLabel}>{'Crie ou selecione uma configuração'}</StepLabel>
                             <StepContent>
-                                <Grid direction="row" container spacing={16}>
+                                <Grid direction="column" container spacing={16}>
                                     <Grid item style={{ display: 'flex' }}>
                                         <Button onClick={this.handleCriarConfig} color="primary" autoFocus>
-                                            {'NOVA'}
+                                            {'CRIAR NOVA'}
                                         </Button>
                                     </Grid>
                                     <Grid item style={{ 'alignItems': 'center', display: 'flex', padding: '10px' }}>
                                         {'OU'}
                                     </Grid>
                                     <Grid item>
-                                        <SeletorArquivo fileDesc={'CONFIGURAÇÃO'} fileTypes={['.json']} parseJson={true} onSelect={this.handleImportarConfig} />
+                                        <SeletorArquivo fileDesc={'SELECIONAR CONFIGURAÇÃO'} fileTypes={['.yml', '.yaml']} asString={true} onSelect={this.handleImportarConfig} />
                                     </Grid>
                                 </Grid>
                             </StepContent>
@@ -118,17 +125,10 @@ class ConfigModal extends Component {
                             <StepLabel>{'Configuração'}</StepLabel>
                             <StepContent>
                                 <Grid container spacing={16}>
-                                    {
-                                        !editedConfig && config && <ResumoConfig onEditConfig={this.handleEditConfig} config={config} />
-                                    }
-                                    {
-                                        editedConfig && <ConfigEditor
-                                            config={editedConfig}
-                                            children={children}
-                                            handleCancelEdition={this.handleCancelConfigEdition}
-                                            handleConfirmEdition={this.handleConfirmConfigEdition}
-                                        />
-                                    }
+                                    <CodeMirror value={config} onChange={this.handleUpdateConfig} options={codeMirrorOpts} className={classes.codeMirror} />
+                                    {/* <Button onClick={this.handleResetConfigBkp} color="primary">
+                                        {'RESETAR'}
+                                    </Button> */}
                                 </Grid>
                             </StepContent>
                         </Step>
@@ -139,7 +139,7 @@ class ConfigModal extends Component {
                         {'CANCELAR'}
                     </Button>
                     <Button onClick={this.handleConfirm} color="primary" variant="raised" autoFocus>
-                        {'OK'}
+                        {'CONFIRMAR'}
                     </Button>
                 </DialogActions>
             </Dialog>
