@@ -28,15 +28,15 @@ export default class App extends Component {
         <AppBar position="static" color="default">
           <Toolbar>
             <Typography variant="title" color="inherit">
-              Processador de Planilhas
-          </Typography>
+              {'Processador de Planilhas'}
+            </Typography>
           </Toolbar>
         </AppBar>
 
         <AppBar position="static">
           <Tabs value={selectedTab} onChange={this.handleTabChange}>
             <Tab value="transf" label="Transformação de planilha" />
-            <Tab value="dedupl" label="Remoção de duplicados" />
+            {/* <Tab value="dedupl" label="Remoção de duplicados" /> */}
           </Tabs>
         </AppBar>
         {selectedTab === 'transf' && <Transformacao />}

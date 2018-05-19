@@ -136,7 +136,7 @@ class ConfigModal extends Component {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCancel} color="secondary" autoFocus>
-                        {'CANCELAR'}
+                        {'VOLTAR'}
                     </Button>
                     <Button onClick={this.handleConfirm} color="primary" variant="raised" autoFocus>
                         {'CONFIRMAR'}

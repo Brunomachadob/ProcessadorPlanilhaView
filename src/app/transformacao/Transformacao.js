@@ -53,13 +53,27 @@ class Transformacao extends Component {
         data.set('config', config);
 
         axios.post('http://localhost:8080/processador', data)
-            .then(function (result) {
-                var blob = new Blob([result.data]);
-                var link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = "myFileName.xlsx";
-                link.click();
-            }).catch(console.error)
+            .then((result) => {
+                if (result.data instanceof Array) {
+                    this.setErrorText(result.data);
+                } else {
+                    var fileName = result.data;
+                    axios.get('http://localhost:8080/processador/download/' + fileName, {
+                        responseType: 'blob'
+                    }).then((result) => {
+                        let link = document.createElement('a')
+                        link.href = window.URL.createObjectURL(result.data)
+                        link.download = fileName.split('_')[0] + 'Processada.xlsx';
+                        link.click()
+                    }).catch((error) => this.setErrorText(error.message));
+                }
+            }).catch((error) => this.setErrorText(error.message))
+    }
+
+    setErrorText = (error) => {
+        this.setState({
+            errorText: error
+        })
     }
 
     render() {
@@ -68,7 +82,7 @@ class Transformacao extends Component {
 
         return (
             <div>
-                {errorText && <ErrorDialog title="Campos obrigatórios" text={errorText} handleClose={this.handleAlertClose} />}
+                {errorText && <ErrorDialog title="Erro" text={errorText} handleClose={this.handleAlertClose} />}
                 {showConfig && <ConfigModal handleCancel={this.handleConfigClose} handleConfirm={this.handleConfigConfirm} />}
                 <Grid
                     container
