@@ -52,13 +52,15 @@ class Transformacao extends Component {
         data.set('file', this.planilha);
         data.set('config', config);
 
-        axios.post('http://localhost:8080/processador', data)
+        
+
+        axios.post(process.env.REACT_APP_API_URL + '/processador', data)
             .then((result) => {
                 if (result.data instanceof Array) {
                     this.setErrorText(result.data);
                 } else {
                     var fileName = result.data;
-                    axios.get('http://localhost:8080/processador/download/' + fileName, {
+                    axios.get(process.env.REACT_APP_API_URL + '/processador/download/' + fileName, {
                         responseType: 'blob'
                     }).then((result) => {
                         let link = document.createElement('a')
