@@ -2,11 +2,6 @@ import React, { Component } from 'react';
 
 import { withStyles } from 'material-ui/styles';
 
-import CodeMirror from 'react-codemirror';
-import 'codemirror/lib/codemirror.css';
-import 'codemirror/theme/oceanic-next.css'
-import 'codemirror/mode/yaml/yaml';
-
 import Grid from 'material-ui/Grid';
 
 import Stepper, { Step, StepLabel, StepContent } from 'material-ui/Stepper';
@@ -18,8 +13,13 @@ import Dialog, {
     DialogTitle,
 } from 'material-ui/Dialog';
 
-import SeletorArquivo from '../../componentes/SeletorArquivo';
+import YAMLCodeMirror from './YAMLCodeMirror';
+import PreViewConfigModal from './PreviewConfigModal';
+import ConfigsList from './ConfigsList';
 
+import FirebaseService from '../../servicos/FirebaseService';
+
+import SeletorArquivo from '../../componentes/SeletorArquivo';
 
 const styles = theme => ({
     codeMirror: {
@@ -32,13 +32,27 @@ const styles = theme => ({
 });
 
 class ConfigModal extends Component {
-    state = {
-        activeStep: 0
-    };
+    constructor(props) {
+        super(props);
+        
+        this.state = {
+            firebaseCollection: props.firebaseCollection,
+            activeStep: 0,
+            configList: []
+        };
+    }
 
-    handleSelectStep = (step) => {
+    componentDidMount = () => {
+        FirebaseService.getDataList(this.state.firebaseCollection, (configList) => {
+            this.setState({
+                configList
+            })
+        });
+    }
+
+    handleSelectStep = (activeStep) => {
         this.setState({
-            activeStep: step
+            activeStep
         })
     }
 
@@ -50,16 +64,17 @@ class ConfigModal extends Component {
         })
     }
 
-    handleImportarConfig = (config) => {
+    handleSelectConfig = (config, key) => {
         this.setState({
             activeStep: 1,
+            configKey: key,
             configBkp: config,
             config: config
-        })
+        });
     }
 
     handleConfirm = event => {
-        this.props.handleConfirm(this.state.config);
+        this.props.handleConfirm(this.state.config, this.state.configKey);
     }
 
     handleUpdateConfig = (config) => {
@@ -70,25 +85,31 @@ class ConfigModal extends Component {
 
     handleResetConfigBkp = () => {
         let bkp = this.state.configBkp;
-        
+
         this.setState({
             config: bkp
         });
     }
 
+    handlePreViewConfig = (item) => {
+        this.setState({
+            preViewConfig: item.config
+        })
+    }
+
+    handleClosePreviewConfig = () => {
+        this.setState({
+            preViewConfig: null
+        })
+    }
+
     render() {
-        const { config } = this.state;
+        const { config, configList, preViewConfig } = this.state;
 
         const {
             handleCancel,
             classes
         } = this.props;
-
-        const codeMirrorOpts = {
-            mode: 'yaml',
-            theme: 'oceanic-next',
-            lineNumbers: true
-        };
 
         return (
             <Dialog
@@ -101,34 +122,47 @@ class ConfigModal extends Component {
                     {'Configuração do processamento'}
                 </DialogTitle>
                 <DialogContent>
-
                     <Stepper activeStep={this.state.activeStep} orientation="vertical">
+
                         <Step key={0}>
                             <StepLabel onClick={() => this.handleSelectStep(0)} className={classes.stepLabel}>{'Crie ou selecione uma configuração'}</StepLabel>
                             <StepContent>
-                                <Grid direction="column" container spacing={16}>
-                                    <Grid item style={{ display: 'flex' }}>
-                                        <Button onClick={this.handleCriarConfig} color="primary" autoFocus>
-                                            {'CRIAR NOVA'}
-                                        </Button>
+                                <Grid container direction="row" spacing={16}>
+                                    <Grid item xs={6}>
+                                        <Grid container direction="column" spacing={16}>
+                                            <Grid item style={{ display: 'flex' }}>
+                                                <Button onClick={this.handleCriarConfig} color="primary" autoFocus>
+                                                    {'CRIAR NOVA'}
+                                                </Button>
+                                            </Grid>
+                                            <Grid item style={{ 'alignItems': 'center', display: 'flex', padding: '10px' }}>
+                                                {'OU'}
+                                            </Grid>
+                                            <Grid item>
+                                                <SeletorArquivo fileDesc={'CONFIGURAÇÃO'} fileTypes={['.yml', '.yaml']} asString={true} onSelect={this.handleSelectConfig} />
+                                            </Grid>
+                                        </Grid>
                                     </Grid>
-                                    <Grid item style={{ 'alignItems': 'center', display: 'flex', padding: '10px' }}>
-                                        {'OU'}
-                                    </Grid>
-                                    <Grid item>
-                                        <SeletorArquivo fileDesc={'SELECIONAR CONFIGURAÇÃO'} fileTypes={['.yml', '.yaml']} asString={true} onSelect={this.handleImportarConfig} />
+                                    <Grid item xs={6}>
+                                        <Grid container direction="column" spacing={16}>
+                                            <Grid item style={{ 'alignItems': 'center', display: 'flex', padding: '10px' }}>
+                                                {'OU SELECIONE UMA CONFIGURAÇÃO SALVA ABAIXO'}
+                                            </Grid>
+                                            <Grid item style={{ 'alignItems': 'center', display: 'flex', padding: '10px' }}>
+                                                {preViewConfig && <PreViewConfigModal config={preViewConfig} handleClosePreviewConfig={this.handleClosePreviewConfig} />}
+                                                <ConfigsList data={configList} handleClick={(item) => this.handleSelectConfig(item.config, item.key)} handleViewConfig={this.handlePreViewConfig} />
+                                            </Grid>
+                                        </Grid>
                                     </Grid>
                                 </Grid>
                             </StepContent>
                         </Step>
+
                         <Step key={1}>
                             <StepLabel>{'Configuração'}</StepLabel>
                             <StepContent>
                                 <Grid container spacing={16}>
-                                    <CodeMirror value={config} onChange={this.handleUpdateConfig} options={codeMirrorOpts} className={classes.codeMirror} />
-                                    {/* <Button onClick={this.handleResetConfigBkp} color="primary">
-                                        {'RESETAR'}
-                                    </Button> */}
+                                    <YAMLCodeMirror value={config} onChange={this.handleUpdateConfig} className={classes.codeMirror} />
                                 </Grid>
                             </StepContent>
                         </Step>
@@ -136,7 +170,7 @@ class ConfigModal extends Component {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCancel} color="secondary" autoFocus>
-                        {'VOLTAR'}
+                        {'CANCELAR'}
                     </Button>
                     <Button onClick={this.handleConfirm} color="primary" variant="raised" autoFocus>
                         {'CONFIRMAR'}
@@ -146,7 +180,5 @@ class ConfigModal extends Component {
         )
     }
 }
-
-
 
 export default withStyles(styles)(ConfigModal);

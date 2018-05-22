@@ -14,7 +14,6 @@ const styles = theme => ({
         'align-items': 'center',
     },
     input: {
-        'width': '400px',
         'margin-right': '10px'
     }
 });

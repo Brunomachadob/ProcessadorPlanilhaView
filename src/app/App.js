@@ -1,19 +1,35 @@
 import React, { Component } from 'react';
 
-import AppBar from 'material-ui/AppBar';
-import Toolbar from 'material-ui/Toolbar';
-import Typography from 'material-ui/Typography';
+import { MuiThemeProvider } from "material-ui/styles/index";
+import { createMuiTheme } from 'material-ui/styles';
+import blueGrey from 'material-ui/colors/blueGrey';
+
 import Tabs, { Tab } from 'material-ui/Tabs';
 
-import Transformacao from './transformacao/Transformacao'
+import AppBar from 'material-ui/AppBar'
+import MenuAppBar from './componentes/MenuAppBar';
+
+import Transformacao from './Transformacao';
+import LandingPage from './Landing'
+
+import FirebaseService from './servicos/FirebaseService';
+
+const theme = createMuiTheme({
+  palette: {
+    primary: blueGrey,
+  },
+});
 
 export default class App extends Component {
+  state = {
+    selectedTab: 'transf',
+    isSignedIn: false
+  };
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      selectedTab: 'transf'
-    };
+  componentDidMount = () => {
+    FirebaseService.onAuthStateChanged((user) => {
+      this.setState({ isSignedIn: !!user, user })
+    });
   }
 
   handleTabChange = (event, selectedTab) => {
@@ -21,27 +37,30 @@ export default class App extends Component {
   };
 
   render() {
-    const { selectedTab } = this.state;
+    const { selectedTab, isSignedIn, user } = this.state;
 
     return (
-      <div>
-        <AppBar position="static" color="default">
-          <Toolbar>
-            <Typography variant="title" color="inherit">
-              {'Processador de Planilhas'}
-            </Typography>
-          </Toolbar>
-        </AppBar>
+      <MuiThemeProvider theme={theme}>
+        <div>
+          <MenuAppBar user={user} />
 
-        <AppBar position="static">
-          <Tabs value={selectedTab} onChange={this.handleTabChange}>
-            <Tab value="transf" label="Transformação de planilha" />
-            {/* <Tab value="dedupl" label="Remoção de duplicados" /> */}
-          </Tabs>
-        </AppBar>
-        {selectedTab === 'transf' && <Transformacao />}
-        {selectedTab === 'dedupl' && <div>dedupl</div>}
-      </div>
+          {!isSignedIn && <LandingPage isSignedIn={isSignedIn} />}
+
+          {isSignedIn && (
+            <div>
+              <AppBar position="static" color="default">
+                <Tabs value={selectedTab} onChange={this.handleTabChange}>
+                  <Tab value="transf" label="Transformação de planilha" />
+                  {/* <Tab value="dedupl" label="Remoção de duplicados" /> */}
+                </Tabs>
+              </AppBar>
+              {selectedTab === 'transf' && <Transformacao />}
+              {selectedTab === 'dedupl' && <div>dedupl</div>}
+
+            </div>
+          )}
+        </div>
+      </MuiThemeProvider >
     );
   }
 }
