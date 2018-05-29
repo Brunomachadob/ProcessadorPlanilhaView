@@ -20,6 +20,7 @@ import ConfigsList from './ConfigsList';
 import FirebaseService from '../../servicos/FirebaseService';
 
 import SeletorArquivo from '../../componentes/SeletorArquivo';
+import { TextField } from 'material-ui';
 
 const styles = theme => ({
     codeMirror: {
@@ -34,7 +35,7 @@ const styles = theme => ({
 class ConfigModal extends Component {
     constructor(props) {
         super(props);
-        
+
         this.state = {
             firebaseCollection: props.firebaseCollection,
             activeStep: 0,
@@ -57,37 +58,46 @@ class ConfigModal extends Component {
     }
 
     handleCriarConfig = () => {
-        this.setState({
-            activeStep: 1,
-            config: '',
-            configBkp: ''
-        })
+        this.handleSelectConfig('', null, '');
     }
 
-    handleSelectConfig = (config, key) => {
+    handleSelectConfig = (config, key, name) => {
         this.setState({
             activeStep: 1,
-            configKey: key,
+            config: {
+                key: key,
+                name: name || '',
+                value: config
+            },
             configBkp: config,
-            config: config
         });
     }
 
     handleConfirm = event => {
-        this.props.handleConfirm(this.state.config, this.state.configKey);
+        var { config } = this.state;
+
+        if (!config || !config.value) {
+            return;
+        }
+
+        this.props.handleConfirm(config);
     }
 
-    handleUpdateConfig = (config) => {
+    handleUpdateConfig = (value) => {
         this.setState({
-            config: config
+            config: {
+                ...this.state.config,
+                value: value
+            }
         });
     }
 
-    handleResetConfigBkp = () => {
-        let bkp = this.state.configBkp;
-
+    handleUpdateConfigName = (e) => {
         this.setState({
-            config: bkp
+            config: {
+                ...this.state.config,
+                name: e.target.value
+            }
         });
     }
 
@@ -150,7 +160,7 @@ class ConfigModal extends Component {
                                             </Grid>
                                             <Grid item style={{ 'alignItems': 'center', display: 'flex', padding: '10px' }}>
                                                 {preViewConfig && <PreViewConfigModal config={preViewConfig} handleClosePreviewConfig={this.handleClosePreviewConfig} />}
-                                                <ConfigsList data={configList} handleClick={(item) => this.handleSelectConfig(item.config, item.key)} handleViewConfig={this.handlePreViewConfig} />
+                                                <ConfigsList data={configList} handleClick={(item) => this.handleSelectConfig(item.config, item.key, item.name)} handleViewConfig={this.handlePreViewConfig} />
                                             </Grid>
                                         </Grid>
                                     </Grid>
@@ -161,9 +171,21 @@ class ConfigModal extends Component {
                         <Step key={1}>
                             <StepLabel>{'Configuração'}</StepLabel>
                             <StepContent>
-                                <Grid container spacing={16}>
-                                    <YAMLCodeMirror value={config} onChange={this.handleUpdateConfig} className={classes.codeMirror} />
-                                </Grid>
+                                {
+                                    config &&
+                                    <Grid container direction="column" spacing={16}>
+                                        <Grid item>
+                                            <TextField
+                                                label="Nome"
+                                                helperText="Informe um nome para salvar sua configuração"
+                                                value={config.name}
+                                                onChange={this.handleUpdateConfigName}
+                                                margin="normal"
+                                            />
+                                            <YAMLCodeMirror value={config.value} onChange={this.handleUpdateConfig} className={classes.codeMirror} />
+                                        </Grid>
+                                    </Grid>
+                                }
                             </StepContent>
                         </Step>
                     </Stepper>

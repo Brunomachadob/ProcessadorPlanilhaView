@@ -10,7 +10,7 @@ import Dialog, {
 const ErrorDialog = (props) => {
     return (
         <Dialog
-            open={true}
+            open={props.open}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
         >

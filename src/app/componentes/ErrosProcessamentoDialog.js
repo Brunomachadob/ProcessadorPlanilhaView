@@ -21,11 +21,11 @@ const styles = theme => ({
     },
 });
 
-function ErrosProcessamentoDialog({ classes, erros, handleClose }) {
+function ErrosProcessamentoDialog({ open, classes, erros, handleClose }) {
     return (
         <Dialog
             fullScreen
-            open={true}
+            open={open}
             onClose={handleClose}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
@@ -42,7 +42,7 @@ function ErrosProcessamentoDialog({ classes, erros, handleClose }) {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {erros.map((erro, index) => {
+                        {erros && erros.map((erro, index) => {
                             return (
                                 <TableRow key={index}>
                                     <TableCell padding="none" component="th" scope="row">

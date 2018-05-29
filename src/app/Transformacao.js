@@ -6,6 +6,8 @@ import Button from 'material-ui/Button';
 import Grid from 'material-ui/Grid';
 import Card, { CardActions, CardContent } from 'material-ui/Card';
 
+import FirebaseService from './servicos/FirebaseService';
+
 import ErrorDialog from './componentes/ErrorDialog';
 import SeletorArquivo from './componentes/SeletorArquivo';
 import ConfigModal from './componentes/config/ConfigModal';
@@ -53,11 +55,11 @@ class Transformacao extends Component {
         });
     }
 
-    handleConfigConfirm = (config, configKey) => {
+    handleConfigConfirm = (config) => {
         const data = new FormData();
 
         data.set('file', this.planilha);
-        data.set('config', config);
+        data.set('config', config.value);
 
         axios.post(process.env.REACT_APP_API_URL + '/processador', data)
             .then((result) => {
@@ -65,16 +67,39 @@ class Transformacao extends Component {
                     this.setErrorText(result.data);
                 } else {
                     var fileName = result.data;
+
                     axios.get(process.env.REACT_APP_API_URL + '/processador/download/' + fileName, {
                         responseType: 'blob'
                     }).then((result) => {
-                        let link = document.createElement('a')
-                        link.href = window.URL.createObjectURL(result.data)
-                        link.download = fileName.split('_')[0] + 'Processada.xlsx';
-                        link.click()
+                        this.downloadFile(fileName, result.data);
+
+                        if (config.name) {
+                            this.upsertConfig(config);
+                        }
                     }).catch((error) => this.setErrorText(error.message));
                 }
             }).catch((error) => this.setErrorText(error.message))
+    }
+
+    downloadFile = (fileName, data) => {
+        let link = document.createElement('a')
+        link.href = window.URL.createObjectURL(data)
+        link.download = fileName.split('_')[0] + 'Processada.xlsx'
+        link.click()
+    }
+
+    upsertConfig = (config) => {
+        const model = {
+            name: config.name,
+            config: config.value,
+            updated: Date.now()
+        };
+
+        if (config.key) {
+            FirebaseService.updateData(config.key, 'configProcessamentos/' + FirebaseService.currentUser().uid, model);
+        } else {
+            FirebaseService.pushData('configProcessamentos/' + FirebaseService.currentUser().uid, model);
+        }
     }
 
     setErrorText = (error) => {
@@ -89,9 +114,9 @@ class Transformacao extends Component {
 
         return (
             <div>
-                {errorText && <ErrorDialog title="Erro" text={errorText} handleClose={this.handleAlertClose} />}
-                {showConfig && <ConfigModal handleCancel={this.handleConfigClose} handleConfirm={this.handleConfigConfirm} firebaseCollection="configProcessamentos" />}
-                {errosProcessamento && <ErrosProcessamentoDialog erros={errosProcessamento} handleClose={this.handleCloseErrosProcessamento} />}
+                <ErrorDialog open={Boolean(errorText)} title="Erro" text={errorText} handleClose={this.handleAlertClose} />
+                {showConfig && <ConfigModal handleCancel={this.handleConfigClose} handleConfirm={this.handleConfigConfirm} firebaseCollection={"configProcessamentos/" + FirebaseService.currentUser().uid} />}
+                <ErrosProcessamentoDialog open={Boolean(errosProcessamento)} erros={errosProcessamento} handleClose={this.handleCloseErrosProcessamento} />
                 <Grid
                     container
                     className={classes.container}
