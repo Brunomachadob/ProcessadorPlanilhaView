@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 
 import ReactFileReader from 'react-file-reader';
 import Button from 'material-ui/Button';
-import Input, { InputLabel } from 'material-ui/Input';
 import { FormControl } from 'material-ui/Form';
 import { withStyles } from 'material-ui/styles';
+import { TextField } from 'material-ui';
 
 
 const styles = theme => ({
@@ -54,15 +54,14 @@ class SeletorArquivo extends Component {
     }
 
     render() {
-        const { classes, fileDesc, fileTypes, parseJson, asString } = this.props;
+        const { classes, error, fileDesc, fileTypes, parseJson, asString } = this.props;
         const { selectedFileName } = this.state;
 
         return (
             <FormControl className={classes.formControl}>
                 <ReactFileReader handleFiles={this.onSelectPlanilha} base64={parseJson || asString} fileTypes={fileTypes} multipleFiles={false}>
                     <div>
-                        <InputLabel htmlFor="file">{fileDesc}</InputLabel>
-                        <Input required className={classes.input} disabled id="file" value={selectedFileName} />
+                        <TextField error={error} label={fileDesc} helperText="Selecione um arquivo." required className={classes.input} disabled id="file" value={selectedFileName} />
                         <Button variant="raised" color="primary">{'SELECIONE A ' + fileDesc.toUpperCase() } </Button>
                     </div>
                 </ReactFileReader>

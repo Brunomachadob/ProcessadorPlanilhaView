@@ -13,6 +13,7 @@ import Transformacao from './Transformacao';
 import LandingPage from './Landing'
 
 import FirebaseService from './servicos/FirebaseService';
+import RemoverDuplicados from './RemoverDuplicados';
 
 const theme = createMuiTheme({
   palette: {
@@ -51,12 +52,11 @@ export default class App extends Component {
               <AppBar position="static" color="default">
                 <Tabs value={selectedTab} onChange={this.handleTabChange}>
                   <Tab value="transf" label="Transformação de planilha" />
-                  {/* <Tab value="dedupl" label="Remoção de duplicados" /> */}
+                  <Tab value="dedupl" label="Remoção de duplicados" />
                 </Tabs>
               </AppBar>
               {selectedTab === 'transf' && <Transformacao />}
-              {selectedTab === 'dedupl' && <div>dedupl</div>}
-
+              {selectedTab === 'dedupl' && <RemoverDuplicados />}
             </div>
           )}
         </div>

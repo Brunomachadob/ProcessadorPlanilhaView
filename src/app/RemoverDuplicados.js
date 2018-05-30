@@ -21,29 +21,32 @@ const styles = theme => ({
     }
 });
 
-const CONFIG_PREFIX = 'configProcessamentos/';
+const CONFIG_PREFIX = 'configRemoveDupl/';
 
-class Transformacao extends Component {
-    planilha;
+class RemoverDuplicados extends Component {
+    planilhaAntiga;
+    planilhaNova;
 
     state = {
         errorText: ''
     }
 
-    onSelectPlanilha = file => {
-        this.planilha = file;
+    onSelectPlanilha = nome => file => {
+        this[nome] = file;
 
         this.setState({
-            planilhaError: false
-        });
+            [nome + 'Error']: false
+        })
     }
 
     processar = e => {
-        const selecionouPlanilha = Boolean(this.planilha);
+        const selecionouPlanilhaAntiga = Boolean(this.planilhaAntiga);
+        const selecionouPlanilhaNova = Boolean(this.planilhaNova)
 
         this.setState({
-            planilhaError: !selecionouPlanilha,
-            showConfig: selecionouPlanilha
+            planilhaAntigaError: !selecionouPlanilhaAntiga,
+            planilhaNovaError: !selecionouPlanilhaNova,
+            showConfig: selecionouPlanilhaAntiga && selecionouPlanilhaNova
         });
     }
 
@@ -74,12 +77,19 @@ class Transformacao extends Component {
     handleConfigConfirm = (config) => {
         const data = new FormData();
 
-        data.set('file', this.planilha);
+        data.set('planilhaAntiga', this.planilhaAntiga);
+        data.set('planilhaNova', this.planilhaNova);
         data.set('config', config.value);
 
-        axios.post(process.env.REACT_APP_API_URL + '/processador', data)
+        axios.post(process.env.REACT_APP_API_URL + '/removerDupls', data)
             .then((result) => {
-                if (result.data instanceof Array) {
+                if (result.data === true) {
+                    this.setErrorText('As duas planilhas são iguais.');
+
+                    if (config.name) {
+                        this.upsertConfig(config);
+                    }
+                } else if (result.data instanceof Array) {
                     this.setErrosProcessamento(result.data);
                 } else {
                     downloadFile(result.data)
@@ -109,12 +119,12 @@ class Transformacao extends Component {
     setErrorText = (error) => {
         this.setState({
             errorText: error
-        })
+        });
     }
 
     render() {
         const { classes } = this.props;
-        const { errorText, planilhaError, showConfig, errosProcessamento } = this.state;
+        const { errorText, showConfig, errosProcessamento, planilhaNovaError, planilhaAntigaError } = this.state;
 
         return (
             <div>
@@ -130,7 +140,8 @@ class Transformacao extends Component {
                 >
                     <Card>
                         <CardContent>
-                            <SeletorArquivo error={planilhaError} onSelect={this.onSelectPlanilha} />
+                            <SeletorArquivo fileDesc="Planilha antiga" onSelect={this.onSelectPlanilha('planilhaAntiga')} error={planilhaAntigaError} />
+                            <SeletorArquivo fileDesc="Planilha nova" onSelect={this.onSelectPlanilha('planilhaNova')} error={planilhaNovaError} />
                         </CardContent>
                         <CardActions>
                             <Button variant="raised" color="primary" onClick={this.processar}>PROCESSAR</Button>
@@ -142,4 +153,4 @@ class Transformacao extends Component {
     }
 }
 
-export default withStyles(styles)(Transformacao);
+export default withStyles(styles)(RemoverDuplicados);
