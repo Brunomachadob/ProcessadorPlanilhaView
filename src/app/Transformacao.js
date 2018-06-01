@@ -8,12 +8,14 @@ import Card, { CardActions, CardContent } from 'material-ui/Card';
 
 import FirebaseService from './servicos/FirebaseService';
 
-import { downloadFile } from './utils/appUtils'
+import { downloadFile } from './utils/appUtils';
 
 import ErrorDialog from './componentes/ErrorDialog';
 import SeletorArquivo from './componentes/SeletorArquivo';
 import ConfigModal from './componentes/config/ConfigModal';
 import ErrosProcessamentoDialog from './componentes/ErrosProcessamentoDialog'
+import HelpDialog from './componentes/HelpDialog';
+import TransformacaoHelp from './help/TransformacaoHelp';
 
 const styles = theme => ({
     container: {
@@ -112,14 +114,21 @@ class Transformacao extends Component {
         })
     }
 
+    toggleHelpDialog = (error) => {
+        this.setState({
+            showAjuda: !this.state.showAjuda
+        })
+    }
+
     render() {
         const { classes } = this.props;
-        const { errorText, planilhaError, showConfig, errosProcessamento } = this.state;
+        const { showAjuda, errorText, planilhaError, showConfig, errosProcessamento } = this.state;
 
         return (
             <div>
                 <ErrorDialog open={Boolean(errorText)} title="Erro" text={errorText} handleClose={this.handleAlertClose} />
-                {showConfig && <ConfigModal handleCancel={this.handleConfigClose} handleConfirm={this.handleConfigConfirm} firebaseCollection={CONFIG_PREFIX + FirebaseService.currentUser().uid} />}
+                {showAjuda && <HelpDialog helpText={TransformacaoHelp} handleClose={this.toggleHelpDialog} />}
+                {showConfig && <ConfigModal handleHelp={this.toggleHelpDialog} handleCancel={this.handleConfigClose} handleConfirm={this.handleConfigConfirm} firebaseCollection={CONFIG_PREFIX + FirebaseService.currentUser().uid} />}
                 <ErrosProcessamentoDialog open={Boolean(errosProcessamento)} erros={errosProcessamento} handleClose={this.handleCloseErrosProcessamento} />
                 <Grid
                     container

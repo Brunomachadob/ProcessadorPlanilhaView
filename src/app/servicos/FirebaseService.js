@@ -37,6 +37,10 @@ export default class FirebaseService {
         });
     };
 
+    static remove = (id, node) => {
+        return firebaseDatabase.ref(node + '/' + id).remove();
+    };
+
     static onAuthStateChanged = (fn) => {
         return firebaseAuth.onAuthStateChanged(fn);
     }

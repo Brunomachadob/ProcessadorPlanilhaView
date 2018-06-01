@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 
 import { withStyles } from 'material-ui/styles';
+import Typography from 'material-ui/Typography';
 
 import Grid from 'material-ui/Grid';
 
@@ -12,6 +13,10 @@ import Dialog, {
     DialogContent,
     DialogTitle,
 } from 'material-ui/Dialog';
+
+import Paper from 'material-ui/Paper';
+
+import HelpIcon from '@material-ui/icons/Help';
 
 import YAMLCodeMirror from './YAMLCodeMirror';
 import PreViewConfigModal from './PreviewConfigModal';
@@ -29,6 +34,13 @@ const styles = theme => ({
     },
     stepLabel: {
         cursor: 'pointer'
+    },
+    button: {
+        margin: theme.spacing.unit,
+    },
+    rightIcon: {
+        marginLeft: theme.spacing.unit,
+        fontSize: 20,
     }
 });
 
@@ -107,6 +119,10 @@ class ConfigModal extends Component {
         })
     }
 
+    handleDeleteConfig = (item) => {
+        FirebaseService.remove(item.key, this.state.firebaseCollection);
+    }
+
     handleClosePreviewConfig = () => {
         this.setState({
             preViewConfig: null
@@ -115,8 +131,10 @@ class ConfigModal extends Component {
 
     render() {
         const { config, configList, preViewConfig } = this.state;
+        const enableConfirm = config && config.value;
 
         const {
+            handleHelp,
             handleCancel,
             classes
         } = this.props;
@@ -154,15 +172,19 @@ class ConfigModal extends Component {
                                         </Grid>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Grid container direction="column" spacing={16}>
-                                            <Grid item style={{ 'alignItems': 'center', display: 'flex', padding: '10px' }}>
-                                                {'OU SELECIONE UMA CONFIGURAÇÃO SALVA ABAIXO'}
+                                        <Paper style={{ flexGrow: 1 }} elevation={4}>
+                                            <Grid container direction="column" spacing={16} style={{padding: '10px'}}>
+                                                <Grid item style={{ 'alignItems': 'center', display: 'flex', padding: '10px' }}>
+                                                    <Typography variant="headline" component="h5">
+                                                        {'Ou selecione uma configuração abaixo'}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item style={{ 'alignItems': 'center', display: 'flex', padding: '10px' }}>
+                                                    {preViewConfig && <PreViewConfigModal config={preViewConfig} handleClosePreviewConfig={this.handleClosePreviewConfig} />}
+                                                    <ConfigsList data={configList} handleClick={(item) => this.handleSelectConfig(item.config, item.key, item.name)} handleViewConfig={this.handlePreViewConfig} handleDeleteConfig={this.handleDeleteConfig} />
+                                                </Grid>
                                             </Grid>
-                                            <Grid item style={{ 'alignItems': 'center', display: 'flex', padding: '10px' }}>
-                                                {preViewConfig && <PreViewConfigModal config={preViewConfig} handleClosePreviewConfig={this.handleClosePreviewConfig} />}
-                                                <ConfigsList data={configList} handleClick={(item) => this.handleSelectConfig(item.config, item.key, item.name)} handleViewConfig={this.handlePreViewConfig} />
-                                            </Grid>
-                                        </Grid>
+                                        </Paper>
                                     </Grid>
                                 </Grid>
                             </StepContent>
@@ -175,13 +197,25 @@ class ConfigModal extends Component {
                                     config &&
                                     <Grid container direction="column" spacing={16}>
                                         <Grid item>
-                                            <TextField
-                                                label="Nome"
-                                                helperText="Informe um nome para salvar sua configuração"
-                                                value={config.name}
-                                                onChange={this.handleUpdateConfigName}
-                                                margin="normal"
-                                            />
+                                            <Grid container direction="row" spacing={16}>
+                                                <Grid item>
+                                                    <TextField
+                                                        label="Nome"
+                                                        helperText="Informe um nome para salvar sua configuração"
+                                                        value={config.name}
+                                                        onChange={this.handleUpdateConfigName}
+                                                        margin="normal"
+                                                    />
+                                                </Grid>
+                                                {handleHelp && <Grid item style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <Button className={classes.button} variant="raised" color="primary" onClick={handleHelp}>
+                                                        {'Ajuda'}
+                                                        <HelpIcon className={classes.rightIcon} />
+                                                    </Button>
+                                                </Grid>}
+                                            </Grid>
+                                        </Grid>
+                                        <Grid item>
                                             <YAMLCodeMirror value={config.value} onChange={this.handleUpdateConfig} className={classes.codeMirror} />
                                         </Grid>
                                     </Grid>
@@ -194,7 +228,7 @@ class ConfigModal extends Component {
                     <Button onClick={handleCancel} color="secondary" autoFocus>
                         {'CANCELAR'}
                     </Button>
-                    <Button onClick={this.handleConfirm} color="primary" variant="raised" autoFocus>
+                    <Button onClick={this.handleConfirm} color="primary" disabled={!enableConfirm} variant="raised" autoFocus>
                         {'CONFIRMAR'}
                     </Button>
                 </DialogActions>
